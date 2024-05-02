@@ -7,13 +7,13 @@
 #SBATCH --mail-user=tferrari@usc.edu
 #SBATCH --account=jazlynmo_738
 #SBATCH --partition=qcb
-#SBATCH --output=/scratch1/tferrari/SlimBenchmark/human/logs/slurm/burnIn/slurm-%A_%a.out
+#SBATCH --output=/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/slurm_logs/human/burnIn/slurm-%A_%a.out
 
 module load gcc/8.3.0
 SLIMDIR=/home1/tferrari/build
 
 # Set working directory
-cd /scratch1/tferrari/SlimBenchmark/human/scripts/run_SLiM
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM/scripts/human/run_SLiM
 
 # Select parameters from config file
 config=human_burnin_config.txt 
@@ -23,15 +23,15 @@ c=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $4}' $config
 n=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $5}' $config)	# n=[1,2]
 
 # Create output directory
-mkdir ../../out/burn${t}_scale${c}_gensize${G}
+mkdir ../../../out/human/burn${t}_scale${c}_gensize${G}
 
 # Generate and run  SLiM burn-in scripts
 if [[ "$t" == "Coal" ]]
 then
 	./slim_scripts/make_slim_human_burnin_coal.job.sh ${n} ${c} ${G}	# generate coal script
-	${SLIMDIR}/slim -t -m ./temp/humanBench_burnin${n}_coal_c${c}_${G}.job	# run coal simulation
+	${SLIMDIR}/slim -t -m ../temp/humanBench_burnin${n}_coal_c${c}_${G}.job	# run coal simulation
 else
 	./slim_scripts/make_slim_human_burnin_sim.job.sh ${n} ${t} ${c} ${G}		# generate 5N/10N/20N script
-	${SLIMDIR}/slim -t -m ./temp/humanBench_burnin${n}_${t}Ne_c${c}_${G}.job	# run 5N/10N/20N simulation
+	${SLIMDIR}/slim -t -m ../temp/humanBench_burnin${n}_${t}Ne_c${c}_${G}.job	# run 5N/10N/20N simulation
 fi
 

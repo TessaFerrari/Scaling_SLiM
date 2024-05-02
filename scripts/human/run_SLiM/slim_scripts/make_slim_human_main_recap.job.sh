@@ -1,5 +1,4 @@
 # Script to make SLIM job script
-# USAGE: ./make_slim_human.job.sh [n] [c] [G] [h] [rep]
 
 # Set n, the burn-in replicate number
 n=${1}
@@ -19,10 +18,10 @@ h=${4}
 # Set rep, the sim replicate number
 rep=${5}
 
-cd /scratch1/tferrari/SlimBenchmark/human
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM/scripts/human
 
 # Make burn-in script
-cat > ./scripts/temp/humanBench_recap_c${c}_${G}_h${h}_n${n}_rep${rep}.job << EOM
+cat > ./temp/humanBench_recap_c${c}_${G}_h${h}_n${n}_rep${rep}.job << EOM
 
 initialize() {
 	
@@ -83,14 +82,14 @@ $(( ${t}/${c} + 5000/${c} )):$(( ${t}/${c} + 5920/${c} )) early() {
 1:$(( ${t}/${c} + 5920/${c} )) late() {
         
 	if (community.tick % 1000 == 0){
-                writeFile("/scratch1/tferrari/SlimBenchmark/human/logs/gen/humanBench_recap_c${c}_${G}_h${h}_n${n}_rep${rep}.gen", paste(sim.cycle));
+                writeFile("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/gen_logs/human/humanBench_recap_c${c}_${G}_h${h}_n${n}_rep${rep}.gen", paste(sim.cycle));
         }
 }
 
 // After reaching present day, save tree sequence
 $(( ${t}/${c} + 5920/${c} )) late() {
 	
-	sim.treeSeqOutput("/scratch1/tferrari/SlimBenchmark/human/out/burnRecap_scale${c}_gensize${G}/humanBench_recap_c${c}_${G}_h${h}_n${n}_rep${rep}.trees");
+	sim.treeSeqOutput("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human/burnRecap_scale${c}_gensize${G}/humanBench_recap_c${c}_${G}_h${h}_n${n}_rep${rep}.trees");
 	catn( "// ********** Initial random number seed: " + simID);
 	catn( "// ********** Burn-in replicate number: ${n}");
 	catn( "// ********** Burn-in type: Recap");

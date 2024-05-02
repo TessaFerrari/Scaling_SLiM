@@ -1,21 +1,24 @@
-# Load libraries ----
+# LOAD LIBRARIES AND READ IN DATA ----
+
+# Load libraries
 library(tidyverse)
 library(scales)
 library(ggpubr)
-library(ghibli)
 library(extrafont)
 #font_import(path="C:/Users/tferrari/AppData/Local/Microsoft/Windows/Fonts")
 loadfonts(device = "win", quiet = TRUE)
 
-# Set working dir ----
+# Set working dir 
 setwd("C:/Users/tferrari/Desktop/SlimBenchmark/fly/data")
 
-# Read in data ----
+# Read in data 
 burn_compData <- read_delim("burnin_compStat_table.txt",delim="\t") 
 main_compData <- read_delim("main_compStat_table.txt",delim="\t")
 msprime_compData <- read_delim("msprime_compStat_table.txt",delim="\t") 
 
-# Combine every 10 100kb genomes into 1 1Mb genome ----
+
+# COMBINE EVERY 10 100kb GENOMES INTO 1 1Mb GENOME ----
+
 main_compData2 <- main_compData 
 main_compData2$SimNum <- case_when(main_compData2$GenomeSize==1e5 ~ floor((main_compData2$SimNum-1)/10)+1,
                                    main_compData2$GenomeSize!=1e5 ~ main_compData2$SimNum)
@@ -31,8 +34,8 @@ msprime_compData2 <- msprime_compData2 %>%
   summarise(TimeSecs=max(TimeSecs))
 
 
-# Combine data (come back to this later, need to figure out how to incorporate ----
-#               msprime runtime into the total simulation runtimes)
+# GET TOTAL COMP STATS BY COMBINING BURN-IN, MAIN, AND MSPRIME DATA ----
+
 tot_compData <- merge(burn_compData, main_compData2, all=TRUE,
                       by.x=c("BurnInType","ScalingFactor","GenomeSize","RepNum"),
                       by.y=c("BurnInType","ScalingFactor","GenomeSize","BurnNum"),
@@ -46,7 +49,9 @@ tot_compData <- replace(tot_compData, is.na(tot_compData), 0)
 tot_compData$TimeSecs_tot <- tot_compData$TimeSecs_burn+tot_compData$TimeSecs_main+tot_compData$TimeSecs_msprime
 tot_compData <- tot_compData[,c(1:6,8,10:12)]
 
-# Create tree generation data ----
+
+# GET COALESCENCE TREE COMP STATS BY COMBINING BURN-IN AND MSPRIME DATA ----
+
 tree_compData <- tot_compData %>%
   group_by(BurnInType,ScalingFactor,GenomeSize,RepNum) %>%
   summarise(TimeSecs_tree = mean(TimeSecs_burn))
@@ -59,7 +64,8 @@ tree_compData <- merge(tree_compData, temp, all =TRUE,
                       suffixes = c("","_msprime"))[,1:7]
 
 
-# Summarize replicates with mean and SD ----
+# SUMMARIZE REPLICATES WITH MEAN AND SD ----
+
 burn_compSummary <- burn_compData %>%
   group_by(BurnInType,ScalingFactor,GenomeSize) %>%
   summarise(meanRT = mean(TimeSecs), sdRT = sd(TimeSecs),
@@ -75,8 +81,13 @@ tree_compSummary <- tree_compData %>%
   group_by(BurnInType,ScalingFactor,GenomeSize) %>%
   summarise(meanRT = mean(TimeSecs_tree), sdRT = sd(TimeSecs_tree))
 
-# Reformat burn in data ----
+
+# REFORMAT BURN-IN DATA ----
+
+# Turn stats to numeric
 burn_compSummary[,4:7] <- lapply(burn_compSummary[,4:7], as.numeric)
+
+# Rename parameters and turn into factors
 burn_compSummary$ScalingFactor <- as.factor(as.numeric(burn_compSummary$ScalingFactor))
 burn_compSummary$BurnInType <- case_when(burn_compSummary$BurnInType=="5" ~ "5N",
                                    burn_compSummary$BurnInType=="10" ~ "10N",
@@ -89,8 +100,13 @@ burn_compSummary$GenomeSize <- case_when(burn_compSummary$GenomeSize==1e+05 ~ "1
                                    burn_compSummary$GenomeSize==1e+07 ~ "10Mb")
 burn_compSummary$GenomeSize <- factor(burn_compSummary$GenomeSize, levels=c('100kb x 10','1Mb','10Mb'))
 
-# Reformat main data ----
+
+# REFORMAT MAIN DATA ----
+
+# Turn stats to numeric
 main_compSummary[,5:8] <- lapply(main_compSummary[,5:8], as.numeric)
+
+# Rename parameters and turn into factors
 main_compSummary$ScalingFactor <- as.factor(as.numeric(main_compSummary$ScalingFactor))
 main_compSummary$BurnInType <- case_when(main_compSummary$BurnInType=="5" ~ "5N",
                                          main_compSummary$BurnInType=="10" ~ "10N",
@@ -106,8 +122,13 @@ main_compSummary$DomCoefficent <- case_when(main_compSummary$DomCoefficent==0.0 
                                       main_compSummary$DomCoefficent==0.5 ~ "Additive")
 main_compSummary$DomCoefficent <- factor(main_compSummary$DomCoefficent, levels=c('Recessive','Additive'))
 
-# Reformat total data
+
+# REFORMAT TOTAL DATA ----
+
+# Turn stats to numeric
 tot_compSummary[,5:6] <- lapply(tot_compSummary[,5:6], as.numeric)
+
+# Rename parameters and turn into factors
 tot_compSummary$ScalingFactor <- as.factor(as.numeric(tot_compSummary$ScalingFactor))
 tot_compSummary$BurnInType <- case_when(tot_compSummary$BurnInType=="5" ~ "5N",
                                          tot_compSummary$BurnInType=="10" ~ "10N",
@@ -123,8 +144,13 @@ tot_compSummary$DomCoefficent <- case_when(tot_compSummary$DomCoefficent==0.0 ~ 
                                             tot_compSummary$DomCoefficent==0.5 ~ "Additive")
 tot_compSummary$DomCoefficent <- factor(tot_compSummary$DomCoefficent, levels=c('Recessive','Additive'))
 
-# Reformat tree data ----
+
+# REFORMAT TREE DATA ----
+
+# Turn stats to numeric
 tree_compSummary[,4:5] <- lapply(tree_compSummary[,4:5], as.numeric)
+
+# Rename parameters and turn into factors
 tree_compSummary$ScalingFactor <- as.factor(as.numeric(tree_compSummary$ScalingFactor))
 tree_compSummary$BurnInType <- case_when(tree_compSummary$BurnInType=="5" ~ "5N",
                                         tree_compSummary$BurnInType=="10" ~ "10N",
@@ -137,8 +163,13 @@ tree_compSummary$GenomeSize <- case_when(tree_compSummary$GenomeSize==1e+05 ~ "1
                                         tree_compSummary$GenomeSize==1e+07 ~ "10Mb")
 tree_compSummary$GenomeSize <- factor(tree_compSummary$GenomeSize, levels=c('100kb x 10','1Mb','10Mb'))
 
-# Graph foramtting ----
+
+# GGPLOT THEME FORMATTING FOR GRAPHS ----
+
+# Reference colors
 ponyoPalette= c("#4D413F","#5A7080","#288B9A","#E75B64","#DE7862","#D8AF37","#E8C4A2","#F8E7D3")
+
+# Custom theme function
 theme_ponyo <- function(){ 
   graphPalette= c('100'="#288B9A",'500'="#E75B64",'1000'="#D8AF37")
   font = "Myriad Pro"   #assign font family up front
@@ -159,17 +190,19 @@ theme_ponyo <- function(){
          ))
 }
 
-# Runtime bar plots ----
-# Runtime Bar plot for burn in
-#burn_runtime <- ggplot(data = burn_compSummary, aes(x=BurnInType, y=meanRT, fill=ScalingFactor))  + 
-#  theme_ponyo() +
-#  geom_errorbar(aes(ymin=meanRT-sdRT, ymax=meanRT+sdRT), width=.2, position=position_dodge(.9)) +  
-#  ggtitle("Runtime of Fly Burn-In Simulations") +
-#  labs(x="Coalescence Method",y="Runtime (minutes)") + 
-#  facet_wrap(. ~ GenomeSize) +
-#  scale_y_log10(expand = expansion(mult = c(0, .05)),labels = label_number(suffix = "", scale = 1/60))
 
-# Runtime plot for main
+# RUNTIME BAR PLOTS ----
+
+# Burn-in runtime bar plot
+burn_runtime <- ggplot(data = burn_compSummary, aes(x=BurnInType, y=meanRT, fill=ScalingFactor))  + 
+  theme_ponyo() +
+  geom_errorbar(aes(ymin=meanRT-sdRT, ymax=meanRT+sdRT), width=.2, position=position_dodge(.9)) +  
+  ggtitle("Runtime of Fly Burn-In Simulations") +
+  labs(x="Coalescence Method",y="Runtime (minutes)") + 
+  facet_wrap(. ~ GenomeSize) +
+  scale_y_log10(expand = expansion(mult = c(0, .05)),labels = label_number(suffix = "", scale = 1/60))
+
+# Main runtime bar plot
 main_runtime <- ggplot(data = main_compSummary, aes(x=BurnInType, y=meanRT, fill=ScalingFactor))  + 
   theme_ponyo() +
   geom_errorbar(aes(ymin=meanRT-sdRT, ymax=meanRT+sdRT), width=.2, position=position_dodge(.9)) +  
@@ -178,7 +211,7 @@ main_runtime <- ggplot(data = main_compSummary, aes(x=BurnInType, y=meanRT, fill
   facet_grid(DomCoefficent ~ GenomeSize) +
   scale_y_log10(breaks=c(30,300,3000,30000),expand = expansion(mult = c(0, .05)),labels = label_number(suffix = "", scale = 1/60))
 
-# Runtime plot for total runtime (burnin + main + msprime)
+# Total runtime bar plot (burnin + main + msprime)
 tot_runtime <- ggplot(data = tot_compSummary, aes(x=BurnInType, y=meanRT, fill=ScalingFactor))  + 
   theme_ponyo() +
   geom_errorbar(aes(ymin=meanRT-sdRT, ymax=meanRT+sdRT), width=.2, position=position_dodge(.9)) +  
@@ -187,7 +220,7 @@ tot_runtime <- ggplot(data = tot_compSummary, aes(x=BurnInType, y=meanRT, fill=S
   facet_grid(DomCoefficent ~ GenomeSize) +
   scale_y_log10(breaks=c(30,300,3000,30000,300000),expand = expansion(mult = c(0, .05)),labels = label_number(suffix = "", scale = 1/60))
 
-# Runtime plot for tree creation runtime (burnin + msprime)
+# Tree runtime bar plot (burnin + msprime)
 tree_runtime <- ggplot(data = tree_compSummary, aes(x=BurnInType, y=meanRT, fill=ScalingFactor))  + 
   theme_ponyo() +
   geom_errorbar(aes(ymin=meanRT-sdRT, ymax=meanRT+sdRT), width=.2, position=position_dodge(.9)) +  
@@ -197,8 +230,9 @@ tree_runtime <- ggplot(data = tree_compSummary, aes(x=BurnInType, y=meanRT, fill
   scale_y_log10(breaks=c(30,300,3000,30000,300000),expand = expansion(mult = c(0.05, .05)),labels = label_number(suffix = "", scale = 1/60))
 
 
-# Memory usage bar plots ----
-# Memory Bar plot for burn in
+# MEMORY USAGE BAR PLOTS ----
+
+# Burn-in memory Bar bar plot
 burn_memory <- ggplot(data = burn_compSummary, aes(x=BurnInType, y=meanMU, fill=ScalingFactor))  + 
   theme_ponyo() +
   geom_errorbar(aes(ymin=meanMU-sdMU, ymax=meanMU+sdMU), width=.2, position=position_dodge(.9)) +  
@@ -207,7 +241,7 @@ burn_memory <- ggplot(data = burn_compSummary, aes(x=BurnInType, y=meanMU, fill=
   facet_wrap(. ~ GenomeSize) +
   scale_y_log10(expand = expansion(mult = c(0, .05)))
 
-# Memory plot for main
+# Main memory bar plot
 main_memory <- ggplot(data = main_compSummary, aes(x=BurnInType, y=meanMU, fill=ScalingFactor))  + 
   theme_ponyo() +
   geom_errorbar(aes(ymin=meanMU-sdMU, ymax=meanMU+sdMU), width=.2, position=position_dodge(.9)) +  
@@ -217,16 +251,19 @@ main_memory <- ggplot(data = main_compSummary, aes(x=BurnInType, y=meanMU, fill=
   scale_y_log10(expand = expansion(mult = c(0, .05)))
 
 
+# SAVE PLOTS TO PDF ----
 
-# Save plots to pdfs ----
-#ggsave(burn_runtime, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/statsComp/fly_burnRT_graph.pdf", 
-#       device = cairo_pdf, width = 11, height = 8.5, units = "in")
+# Save runtime plots
+ggsave(burn_runtime, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/statsComp/fly_burnRT_graph.pdf", 
+       device = cairo_pdf, width = 11, height = 8.5, units = "in")
 ggsave(main_runtime, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/statsComp/fly_mainRT_graph.pdf", 
        device = cairo_pdf, width = 11, height = 8.5, units = "in")
 ggsave(tot_runtime, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/statsComp/fly_totRT_graph.pdf", 
        device = cairo_pdf, width = 11, height = 8.5, units = "in")
 ggsave(tree_runtime, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/statsComp/fly_treeRT_graph.pdf", 
        device = cairo_pdf, width = 11, height = 8.5, units = "in")
+
+# Save memory plots
 ggsave(burn_memory, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/statsComp/fly_burnMem_graph.pdf", 
        device = cairo_pdf, width = 11, height = 8.5, units = "in")
 ggsave(main_memory, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/statsComp/fly_mainMem_graph.pdf", 

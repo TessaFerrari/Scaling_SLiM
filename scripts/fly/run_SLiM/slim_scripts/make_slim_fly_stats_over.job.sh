@@ -1,5 +1,4 @@
 # Script to make SLIM job script
-# USAGE: ./make_slim_fly_stats.job.sh [n] [t] [c] [G] [h] [rep]
 
 # Set n, the burn-in replicate number
 n=${1}
@@ -20,10 +19,10 @@ h=${5}
 # Set rep, the sim replicate number
 rep=${6}
 
-cd /scratch1/tferrari/SlimBenchmark/fly
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM/scripts/fly
 
 # Make burn-in script
-cat > ./scripts/temp/flyBench_stats_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.job << EOM
+cat > ./temp/flyBench_stats_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.job << EOM
 
 initialize() {
 	
@@ -34,19 +33,18 @@ initialize() {
 	initializeMutationType("m2", ${h}, "g", -1.33e-4*${c}, 0.35);   // Deleterious mutation (recessive or additive)
 	initializeGenomicElementType("g1", c(m1,m2), c(1,2.85));        // Ratio of neu to del is 1:2.85
 
-
 	initializeGenomicElement(g1, 0, ${G}-1); 
-	initializeRecombinationRate(2.06e-8*${c});		// recombination rate from SLiM Recipe 5.4 - The Gravel et al. (2011) model of fly evolution
+	initializeRecombinationRate(2.06e-8*${c});
 }
 
 // Read in tree and output stats
 1 late() { 
 
-	sim.readFromPopulationFile("/scratch1/tferrari/SlimBenchmark/fly/out/burn${t}_scale${c}_gensize${G}/flyBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.over.trees");
+	sim.readFromPopulationFile("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/fly/burn${t}_scale${c}_gensize${G}/flyBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.over.trees");
 	
 	// Output VCFs
 	p1_ids = p1.individuals.genomes;
-        p1_ids.outputVCF(filePath="/scratch1/tferrari/SlimBenchmark/fly/out/burn${t}_scale${c}_gensize${G}/flyBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.african.vcf");
+        p1_ids.outputVCF(filePath="/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/fly/burn${t}_scale${c}_gensize${G}/flyBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.african.vcf");
 
 	// Calculate Summary Stats
 	p1_het = calcHeterozygosity(p1.genomes);	// African

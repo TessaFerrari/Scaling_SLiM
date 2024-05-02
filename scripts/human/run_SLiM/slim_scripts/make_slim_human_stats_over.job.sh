@@ -1,5 +1,4 @@
 # Script to make SLIM job script
-# USAGE: ./make_slim_human_stats.job.sh [n] [t] [c] [G] [h] [rep]
 
 # Set n, the burn-in replicate number
 n=${1}
@@ -20,10 +19,10 @@ h=${5}
 # Set rep, the sim replicate number
 rep=${6}
 
-cd /scratch1/tferrari/SlimBenchmark/human
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM/scripts/human
 
 # Make burn-in script
-cat > ./scripts/temp/humanBench_stats_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.job << EOM
+cat > ./temp/humanBench_stats_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.job << EOM
 
 initialize() {
 	
@@ -41,15 +40,15 @@ initialize() {
 // Read in tree and output stats
 1 late() { 
 
-	sim.readFromPopulationFile("/scratch1/tferrari/SlimBenchmark/human/out/burn${t}_scale${c}_gensize${G}/humanBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.over.trees");
+	sim.readFromPopulationFile("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human/burn${t}_scale${c}_gensize${G}/humanBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.over.trees");
 	
 	// Output VCFs
 	p1_ids = p1.individuals.genomes;
-        p1_ids.outputVCF(filePath="/scratch1/tferrari/SlimBenchmark/human/out/burn${t}_scale${c}_gensize${G}/humanBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.african.vcf");	
+        p1_ids.outputVCF(filePath="/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human/burn${t}_scale${c}_gensize${G}/humanBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.african.vcf");	
 	p2_ids = p2.individuals.genomes;
-        p2_ids.outputVCF(filePath="/scratch1/tferrari/SlimBenchmark/human/out/burn${t}_scale${c}_gensize${G}/humanBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.european.vcf");
+        p2_ids.outputVCF(filePath="/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human/burn${t}_scale${c}_gensize${G}/humanBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.european.vcf");
 	p3_ids = p3.individuals.genomes;
-        p3_ids.outputVCF(filePath="/scratch1/tferrari/SlimBenchmark/human/out/burn${t}_scale${c}_gensize${G}/humanBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.eastasian.vcf");
+        p3_ids.outputVCF(filePath="/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human/burn${t}_scale${c}_gensize${G}/humanBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.eastasian.vcf");
 
 	// Calculate Summary Stats
 	p1_het = calcHeterozygosity(p1.genomes);	// African

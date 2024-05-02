@@ -1,7 +1,6 @@
 # Script to make SLIM job script
-# USAGE: ./make_slim_human.job.sh [n] [c] [G] [h] [rep]
 
-cd /scratch1/tferrari/SlimBenchmark/human
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM/scripts/human
 
 # Set n, the burn-in replicate number
 n=${1}
@@ -19,10 +18,10 @@ h=${4}
 rep=${5}
 
 # Set t, the number of burn-in generations (grab length from burn-in stat file and multiply by c to unscale)
-t=$((`awk 'BEGIN{FS="CYCLE "} /COALESCE/ {print $2+0}' ./out/burnCoal_scale${c}_gensize${G}/humanBench_burnin${n}_coal_c${c}_${G}.txt`*${c}))
+t=$((`awk 'BEGIN{FS="CYCLE "} /COALESCE/ {print $2+0}' ../../out/human/burnCoal_scale${c}_gensize${G}/humanBench_burnin${n}_coal_c${c}_${G}.txt`*${c}))
 
 # Make burn-in script
-cat > ./scripts/temp/humanBench_coal_c${c}_${G}_h${h}_n${n}_rep${rep}.job << EOM
+cat > ./temp/humanBench_coal_c${c}_${G}_h${h}_n${n}_rep${rep}.job << EOM
 
 initialize() {
 	
@@ -40,7 +39,7 @@ initialize() {
 // Create the ancestral African population by reading burn-in trees file
 1 late() { 
 	defineConstant("simID", getSeed());
-	sim.readFromPopulationFile("/scratch1/tferrari/SlimBenchmark/human/out/burnCoal_scale${c}_gensize${G}/humanBench_burnin${n}_coal_c${c}_${G}.trees"); }
+	sim.readFromPopulationFile("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human/burnCoal_scale${c}_gensize${G}/humanBench_burnin${n}_coal_c${c}_${G}.trees"); }
 
 // Expand the African population to 14474
 // This occurs 148000 years (5920) generations ago
@@ -83,14 +82,14 @@ $(( ${t}/${c} + 5000/${c} )):$(( ${t}/${c} + 5920/${c} )) early() {
 1:$(( ${t}/${c} + 5920/${c} )) late() {
         
 	if (community.tick % 1000 == 0){
-                writeFile("/scratch1/tferrari/SlimBenchmark/human/logs/gen/humanBench_coal_c${c}_${G}_h${h}_n${n}_rep${rep}.gen", paste(sim.cycle));
+                writeFile("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/gen_logs/human/humanBench_coal_c${c}_${G}_h${h}_n${n}_rep${rep}.gen", paste(sim.cycle));
         }
 }
 
 // After reaching present day, save tree sequence
 $(( ${t}/${c} + 5920/${c} )) late() {
 	
-	sim.treeSeqOutput("/scratch1/tferrari/SlimBenchmark/human/out/burnCoal_scale${c}_gensize${G}/humanBench_coal_c${c}_${G}_h${h}_n${n}_rep${rep}.trees");
+	sim.treeSeqOutput("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human/burnCoal_scale${c}_gensize${G}/humanBench_coal_c${c}_${G}_h${h}_n${n}_rep${rep}.trees");
 	catn( "// ********** Initial random number seed: " + simID);
 	catn( "// ********** Burn-in replicate number: ${n}");
 	catn( "// ********** Burn-in type: Coal");

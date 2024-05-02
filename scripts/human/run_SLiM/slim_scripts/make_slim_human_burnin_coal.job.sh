@@ -12,10 +12,10 @@ G=${3}
 # Set t, the unscaled maximum burn-in length (30Ne)
 t=$((30*7310))
 
-cd /scratch1/tferrari/SlimBenchmark/human
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM/scripts/human
 
 # Make burn-in script
-cat > ./scripts/temp/humanBench_burnin${n}_coal_c${c}_${G}.job << EOM
+cat > ./temp/humanBench_burnin${n}_coal_c${c}_${G}.job << EOM
 
 initialize() {
 	
@@ -41,14 +41,14 @@ initialize() {
 1:$(( ${t}/${c} )) late() {
         
 	if (community.tick % 1000 == 0){
-                writeFile("/scratch1/tferrari/SlimBenchmark/human/logs/gen/humanBench_burnin${n}_coal_c${c}_${G}.gen", paste(sim.cycle));
+                writeFile("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/gen_logs/human/humanBench_burnin${n}_coal_c${c}_${G}.gen", paste(sim.cycle));
         }
 }
 
 // Once tree has coalesced, save tree sequence and end simulation
 1:$(( ${t}/${c} )) late() {
 	if (sim.treeSeqCoalesced()) {
-		sim.treeSeqOutput("/scratch1/tferrari/SlimBenchmark/human/out/burnCoal_scale${c}_gensize${G}/humanBench_burnin${n}_coal_c${c}_${G}.trees");
+		sim.treeSeqOutput("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human/burnCoal_scale${c}_gensize${G}/humanBench_burnin${n}_coal_c${c}_${G}.trees");
 		catn("COALESCED AT CYCLE " + sim.cycle + " (" + sim.cycle*${c}/7310 + "Ne)");
 		catn( "// ********** Initial random number seed: " + simID);
 		catn( "// ********** Burn-in replicate number: ${n}");
@@ -62,7 +62,7 @@ initialize() {
 // If tree hasn't coalesced after 30Ne generations, save tree sequence
 $(( ${t}/${c} )) late() {
 	
-	sim.treeSeqOutput("/scratch1/tferrari/SlimBenchmark/human/out/burnCoal_scale${c}_gensize${G}/humanBench_burnin${n}_coal_c${c}_${G}.trees");
+	sim.treeSeqOutput("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human/burnCoal_scale${c}_gensize${G}/humanBench_burnin${n}_coal_c${c}_${G}.trees");
 	catn("NO COALESCENCE BY CYCLE $(( ${t}/${c} )) (30Ne)");
 	catn( "// ********** Initial random number seed: " + simID);
 	catn( "// ********** Burn-in replicate number: ${n}");

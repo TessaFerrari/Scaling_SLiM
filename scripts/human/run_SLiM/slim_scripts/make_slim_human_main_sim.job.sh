@@ -19,10 +19,10 @@ h=${5}
 # Set rep, the sim replicate number
 rep=${6}
 
-cd /scratch1/tferrari/SlimBenchmark/human
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM/scripts/human 
 
 # Make burn-in script
-cat > ./scripts/temp/humanBench_${x}Ne_c${c}_${G}_h${h}_n${n}_rep${rep}.job << EOM
+cat > ./temp/humanBench_${x}Ne_c${c}_${G}_h${h}_n${n}_rep${rep}.job << EOM
 
 initialize() {
 	
@@ -41,7 +41,7 @@ initialize() {
 // Create the ancestral African population by reading burn-in trees file
 1 late() { 
 	defineConstant("simID", getSeed());
-	sim.readFromPopulationFile("/scratch1/tferrari/SlimBenchmark/human/out/burn${x}_scale${c}_gensize${G}/humanBench_burnin${n}_${x}Ne_c${c}_${G}.trees"); }
+	sim.readFromPopulationFile("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human/burn${x}_scale${c}_gensize${G}/humanBench_burnin${n}_${x}Ne_c${c}_${G}.trees"); }
 
 // Expand the African population to 14474
 // This occurs 148000 years (5920) generations ago
@@ -84,14 +84,14 @@ $(( ${t}/${c} + 5000/${c} )):$(( ${t}/${c} + 5920/${c} )) early() {
 1:$(( ${t}/${c} + 5920/${c} )) late() {
         
 	if (community.tick % 1000 == 0){
-                writeFile("/scratch1/tferrari/SlimBenchmark/human/logs/gen/humanBench_${x}Ne_c${c}_${G}_h${h}_n${n}_rep${rep}.gen", paste(sim.cycle));
+                writeFile("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/gen_logs/human/humanBench_${x}Ne_c${c}_${G}_h${h}_n${n}_rep${rep}.gen", paste(sim.cycle));
         }
 }
 
 // After reaching present day, save tree sequence
 $(( ${t}/${c} + 5920/${c} )) late() {
 	
-	sim.treeSeqOutput("/scratch1/tferrari/SlimBenchmark/human/out/burn${x}_scale${c}_gensize${G}/humanBench_${x}Ne_c${c}_${G}_h${h}_n${n}_rep${rep}.trees");
+	sim.treeSeqOutput("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human/burn${x}_scale${c}_gensize${G}/humanBench_${x}Ne_c${c}_${G}_h${h}_n${n}_rep${rep}.trees");
 	catn( "// ********** Initial random number seed: " + simID);
 	catn( "// ********** Burn-in replicate number: ${n}");
 	catn( "// ********** Burn-in type: ${x}");

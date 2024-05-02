@@ -1,4 +1,6 @@
-# Load libraries and read in data ----
+# LOAD LIBRARIES AND READ IN SIMULATED DATA ----
+
+# Load libraries
 library(tidyverse)
 library(extrafont)
 library(scales)
@@ -7,20 +9,23 @@ library(ggh4x)
 library(ggbreak) 
 loadfonts(device = "win", quiet = TRUE)
 
-
+# Set working directory
 setwd("C:/Users/tferrari/Desktop/SlimBenchmark/human/data")
+
+# Read in simulated data
 sfsData <- as.data.frame(read_delim("subsamp50_sfs_table.txt",delim="\t"))
 
-# Read in and reformat empirical SFS ----
-# african data
+
+# READ IN EMPIRICAL DATA ----
+
+# African data
 multiIdx <- expand.grid(c("african"),c(5,10,20,"Coal","Recap"),c("Empirical"),c(1e5,1e6,1e7),c(0.0,0.5),c(1),c(1))
 #YRIdata <- as.data.frame(t(read_delim("empiricalData/YRI_WholeGenomeCountsforSFS_Folded.txt",delim="\t")))[2,] # Whole genome data (totLength=2897310462)
 YRIdata <- as.data.frame(t(read_delim("empiricalData/YRI_Exonic_FoldedN30.txt",delim="\t")))[2,] # Exonic data (totLength=26824075)
 YRIdata <- rbind(YRIdata, YRIdata[rep(1, 29), ])
 YRIdata <- cbind(multiIdx,YRIdata)
 
-
-# european data
+# European data
 multiIdx <- expand.grid(c("european"),c(5,10,20,"Coal","Recap"),c("Empirical"),c(1e5,1e6,1e7),c(0.0,0.5),c(1),c(1))
 #CEUdata <- as.data.frame(t(read_delim("empiricalData/CEU_WholeGenomeCountsforSFS_Folded.txt",delim="\t")))[2,] # Whole genome data (totLength=2897310462)
 CEUdata <- as.data.frame(t(read_delim("empiricalData/CEU_Exonic_FoldedN30.txt",delim="\t")))[2,] # Exonic data (totLength=26824075)
@@ -40,7 +45,9 @@ empiricalData <- empiricalData %>%
          .after = 7) %>%
   select(-`0`)
 
-# Sum every 10 100kb replicates to create 5 reps of 100kb x 10 ----
+
+# COMBINE EVERY 10 100kb GENOMES INTO 1 1Mb GENOME ----
+
 sfsData <- rbind.data.frame(sfsData[sfsData$GenomeSize==1e5,] %>% 
                               mutate(SimNum=floor((sfsData[sfsData$GenomeSize==1e5,]$SimNum-1)/10)+1) %>%
                               group_by(Population,BurnInType,ScalingFactor,GenomeSize,DomCoefficent,BurnNum,SimNum) %>%
@@ -48,30 +55,37 @@ sfsData <- rbind.data.frame(sfsData[sfsData$GenomeSize==1e5,] %>%
                               rename_with(~ c("TotNumMuts",1:50), 8:58),
                             sfsData[sfsData$GenomeSize!=1e5,])
 
-# Calculate population stats from simulation SFS ----
 
-# Takes in freqs vector of segregating sites, returns heterozygosity (2pq) UNAJUSTED BY GENSIZE
+# CALCULATE SIMULATED POP STATS ----
+
+# Expected heterozygosity function 
+# takes in freqs vector of segregating sites, returns heterozygosity (2pq) UNAJUSTED BY GENSIZE
 calc_het <- function(freqs, nSamp) {
   pq = (1:nSamp/(2*nSamp))*(1-1:nSamp/(2*nSamp))
   exp_het <- sum(2*pq*freqs)
   return(exp_het)
 }
-# Takes in tot# of segregating sites, returns theta (K/a_n)) UNAJUSTED BY GENSIZE
+
+# Watterson's theta function
+# takes in tot# of segregating sites, returns theta (K/a_n)) UNAJUSTED BY GENSIZE
 calc_theta <-function(K,nSamp){
   a_n = sum(1/seq(1,(nSamp*2)-1,1))
   theta = K/a_n
   return(theta)
 }
+
 # Add popstats to dataframe
 popsfsData <- sfsData %>% 
   rowwise() %>%
   mutate( ExpHet = calc_het(c_across(`1`:`50`),50)/GenomeSize, 
           Theta = calc_theta(TotNumMuts,50)/GenomeSize) %>%
   select(Population:SimNum, ExpHet, Theta)
+
 # since 100kb are aggregated in sets of 10, divide by 10
 popsfsData[popsfsData$GenomeSize==1e5,c("ExpHet","Theta")] = popsfsData[popsfsData$GenomeSize==1e5,c("ExpHet","Theta")]/10
 
-# Calculate population stats from empirical SFS ----
+
+# CALCULATE EMPIRICAL POP STATS ----
 
 # Add popstats to dataframe
 popEmpiricalData <- empiricalData %>% 
@@ -83,7 +97,10 @@ popEmpiricalData <- empiricalData %>%
 # add empirical data to pop stat data frame
 popsfsData <- rbind(popsfsData,popEmpiricalData)
 
-# Put Minor allele freq into bins (i.e. cols 1:5 sum to be MAF 1-5%) ----
+
+# BIN MAF INTO 10 BINS ----
+
+# Bin simulated data (50 diploid)
 sfsData$`0-0.05` <- rowSums(sfsData[,as.character(1:5)])
 sfsData$`0.05-0.1` <- rowSums(sfsData[,as.character(6:10)])
 sfsData$`0.1-0.15` <- rowSums(sfsData[,as.character(11:15)])
@@ -95,7 +112,7 @@ sfsData$`0.35-0.4` <- rowSums(sfsData[,as.character(36:40)])
 sfsData$`0.4-0.45` <- rowSums(sfsData[,as.character(41:45)])
 sfsData$`0.45-0.5` <- rowSums(sfsData[,as.character(46:50)])
 
-# Bin by MAF for empirical data
+# Bin empirical data (30 diploid)
 empiricalData$`0-0.05` <- rowSums(empiricalData[,as.character(1:3)])
 empiricalData$`0.05-0.1` <- rowSums(empiricalData[,as.character(4:6)])
 empiricalData$`0.1-0.15` <- rowSums(empiricalData[,as.character(7:9)])
@@ -107,23 +124,29 @@ empiricalData$`0.35-0.4` <- rowSums(empiricalData[,as.character(22:24)])
 empiricalData$`0.4-0.45` <- rowSums(empiricalData[,as.character(25:27)])
 empiricalData$`0.45-0.5` <- rowSums(empiricalData[,as.character(28:30)])
 
-# Remove small bins and combine simulated and empirical data---
+
+# COMBINE SIMULATED AND EMPIRICAL SFS ----
+
+# Combine
 sfsData <- sfsData[,c(1:8,59:68)]
 empiricalData <- empiricalData[,c(1:8,40:49)]
 
+# Update factor levels
 sfsData$ScalingFactor <- as.character(sfsData$ScalingFactor)
 sfsData <- rbind(sfsData,empiricalData)
 
-# Make allele frequencies a proportion of total snp counts ----
+
+# MAKE COUNTS A PROPORTION OF TOTAL SNPS ----
+
 sfsData[,9:18] <- sfsData[,9:18]/sfsData$TotNumMuts
 
-# Add column for the sum of the sfs tail (cols 5 to 50)
-#sfsData <- cbind.data.frame(sfsData[,1:12], sfsData[,13:58] %>% mutate(TailSum = rowSums(.)))
 
-# Summarize replicates with mean and SD ----
+# SUMMARIZE REPLICATES WITH MEAN AND SD ----
+
 sfsSummary <- sfsData %>%
   group_by(Population,BurnInType,ScalingFactor,GenomeSize,DomCoefficent) %>%
-  summarise_at(as.character(c("0-0.05","0.05-0.1","0.1-0.15","0.15-0.2","0.2-0.25","0.25-0.3","0.3-0.35","0.35-0.4","0.4-0.45","0.45-0.5")), list(mean = mean, sd = sd)) %>% 
+  summarise_at(as.character(c("0-0.05","0.05-0.1","0.1-0.15","0.15-0.2","0.2-0.25","0.25-0.3","0.3-0.35","0.35-0.4","0.4-0.45","0.45-0.5")), 
+               list(mean = mean, sd = sd)) %>% 
   replace(is.na(.), 0)
 
 popsfsSummary <- popsfsData %>%
@@ -131,7 +154,10 @@ popsfsSummary <- popsfsData %>%
   summarise_at(c("ExpHet","Theta"), list(mean = mean, sd = sd))  %>% 
   replace(is.na(.), 0)
 
-# Reformat SFS Data ----
+
+# REFORMAT SFS DATA ----
+
+# Rename parameters and turn into factors
 sfsSummary$ScalingFactor <- factor(sfsSummary$ScalingFactor, levels = c("Empirical","1","5","10"))
 sfsSummary$Population <- case_when(sfsSummary$Population=="african" ~ "African",
                                    sfsSummary$Population=="european" ~ "European",
@@ -142,17 +168,18 @@ sfsSummary$BurnInType <- case_when(sfsSummary$BurnInType=="5" ~ "5N",
                                    sfsSummary$BurnInType=="Coal" ~ "Coal",
                                    sfsSummary$BurnInType=="Recap" ~ "Recap")
 sfsSummary$BurnInType <- factor(sfsSummary$BurnInType, levels=c('5N','10N','20N','Coal','Recap'))
-
 sfsSummary$GenomeSize <- case_when(sfsSummary$GenomeSize==1e+05 ~ "100kb x 10",
                                    sfsSummary$GenomeSize==1e+06 ~ "1Mb",
                                    sfsSummary$GenomeSize==1e+07 ~ "10Mb")
 sfsSummary$GenomeSize <- factor(sfsSummary$GenomeSize, levels=c('100kb x 10','1Mb','10Mb'))
-
 sfsSummary$DomCoefficent <- case_when(sfsSummary$DomCoefficent==0.0 ~ "Recessive",
                                       sfsSummary$DomCoefficent==0.5 ~ "Additive")
 sfsSummary$DomCoefficent <- factor(sfsSummary$DomCoefficent, levels=c('Recessive','Additive'))
 
-# Reformat pop stat Data ----
+
+# REFORMAT POP STAT DATA ----
+
+# Rename parameters and turn into factors
 popsfsSummary$ScalingFactor <- factor(popsfsSummary$ScalingFactor, levels = c("Empirical","1","5","10"))
 popsfsSummary$Population <- case_when(popsfsSummary$Population=="african" ~ "African",
                                    popsfsSummary$Population=="european" ~ "European",
@@ -163,19 +190,21 @@ popsfsSummary$BurnInType <- case_when(popsfsSummary$BurnInType=="5" ~ "5N",
                                    popsfsSummary$BurnInType=="Coal" ~ "Coal",
                                    popsfsSummary$BurnInType=="Recap" ~ "Recap")
 popsfsSummary$BurnInType <- factor(popsfsSummary$BurnInType, levels=c('5N','10N','20N','Coal','Recap'))
-
 popsfsSummary$GenomeSize <- case_when(popsfsSummary$GenomeSize==1e+05 ~ "100kb x 10",
                                    popsfsSummary$GenomeSize==1e+06 ~ "1Mb",
                                    popsfsSummary$GenomeSize==1e+07 ~ "10Mb")
 popsfsSummary$GenomeSize <- factor(popsfsSummary$GenomeSize, levels=c('100kb x 10','1Mb','10Mb'))
-
 popsfsSummary$DomCoefficent <- case_when(popsfsSummary$DomCoefficent==0.0 ~ "Recessive",
                                       popsfsSummary$DomCoefficent==0.5 ~ "Additive")
 popsfsSummary$DomCoefficent <- factor(popsfsSummary$DomCoefficent, levels=c('Recessive','Additive'))
 
 
-# Graph formatting ----
+# GGPLOT THEME FORMATTING FOR GRAPHS ----
+
+# Reference colors
 ponyoPalette= c("#4D413F","#5A7080","#288B9A","#E75B64","#DE7862","#D8AF37","#E8C4A2","#F8E7D3")
+
+# Custom theme function
 theme_ponyo <- function(){ 
   graphPalette= c("Empirical"="#5A7080","1"="#288B9A","5"="#E75B64","10"="#D8AF37")
   font = "Myriad Pro"   #assign font family up front
@@ -198,15 +227,18 @@ theme_ponyo <- function(){
 options(scipen=10000) # remove scientific notation
 
 
-# Pivot mean and sd ----
+# PIVOT MEAN AND SD ----
+
 sfsLonger <- sfsSummary %>% 
   pivot_longer(cols = ends_with(c("_mean","_sd")), 
                names_to = c("AlleleFreq", ".value"), 
-               names_sep="_" )%>% 
+               names_sep="_" ) %>% 
   filter(grepl( '-', AlleleFreq, fixed = TRUE))
 sfsLonger$AlleleFreq <- factor(sfsLonger$AlleleFreq, levels = c("0-0.05","0.05-0.1","0.1-0.15","0.15-0.2","0.2-0.25","0.25-0.3","0.3-0.35","0.35-0.4","0.4-0.45","0.45-0.5"))
 
-# Separate by population ----
+
+# SEPARATE DATA BY POPULATION ----
+
 sfs_afr <- sfsLonger[sfsLonger$Population=="African",]
 sfs_eur <- sfsLonger[sfsLonger$Population=="European",]
 sfs_easi <- sfsLonger[sfsLonger$Population=="East Asian",]
@@ -215,8 +247,10 @@ pop_afr <- popsfsSummary[popsfsSummary$Population=="African",]
 pop_eur <- popsfsSummary[popsfsSummary$Population=="European",]
 pop_easi <- popsfsSummary[popsfsSummary$Population=="East Asian",]
 
-# SFS Plots by population ----
-# African sfs
+
+# SITE FREQUENCY SPECTRA ----
+
+# African SFS
 afr_plt = ggplot(data=sfs_afr, aes(x=AlleleFreq,y=mean,fill=ScalingFactor)) +
   theme_ponyo() +
   geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), size=0.2, width=0.3, position=position_dodge(.9)) +
@@ -226,7 +260,7 @@ afr_plt = ggplot(data=sfs_afr, aes(x=AlleleFreq,y=mean,fill=ScalingFactor)) +
   facet_nested(GenomeSize + DomCoefficent  ~ BurnInType) +
   theme(axis.text.x = element_text(angle = 50, vjust = 0.5))
 
-# European sfs
+# European SFS
 eur_plt = ggplot(data=sfs_eur, aes(x=AlleleFreq,y=mean,fill=ScalingFactor)) +
   theme_ponyo() +
   geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), size=0.2, width=0.3, position=position_dodge(.9)) +
@@ -236,7 +270,7 @@ eur_plt = ggplot(data=sfs_eur, aes(x=AlleleFreq,y=mean,fill=ScalingFactor)) +
   facet_nested(GenomeSize + DomCoefficent  ~ BurnInType) +
   theme(axis.text.x = element_text(angle = 50, vjust = 0.5))
 
-# East Asian sfs
+# East Asian SFS
 easi_plt = ggplot(data=sfs_easi, aes(x=AlleleFreq,y=mean,fill=ScalingFactor)) +
   theme_ponyo() +
   geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), size=0.2, width=0.3, position=position_dodge(.9)) +
@@ -247,40 +281,9 @@ easi_plt = ggplot(data=sfs_easi, aes(x=AlleleFreq,y=mean,fill=ScalingFactor)) +
   theme(axis.text.x = element_text(angle = 50, vjust = 0.5))
 
 
-# SFS tail plots by population ----
-# African SFS Tail
-tail_afr <- ggplot(data = sfsSummary[sfsSummary$Population=="African",], aes(x=BurnInType, y=TailSum_mean, fill=ScalingFactor))  + 
-  theme_ponyo() +
-  geom_errorbar(aes(ymin=TailSum_mean-TailSum_sd, ymax=TailSum_mean+TailSum_sd), width=.2, position=position_dodge(.9)) +
-  ggtitle("SFS Tail Sums of Human African Population") +
-  labs(x="Burn-In Method",y="Proportion of SNPs in SFS Tail\n(Sum of Allele Frequencies 5-50)") + 
-  facet_grid2(DomCoefficent ~ GenomeSize, scales = "free_y", independent = "y")+
-  scale_y_continuous(limits = c(0,0.6), expand = expansion(mult = c(0, .05)))
+# EXPECTED HETEROZYGOSITY BAR PLOTS ----
 
-# European SFS Tail
-tail_eur <- ggplot(data = sfsSummary[sfsSummary$Population=="European",], aes(x=BurnInType, y=TailSum_mean, fill=ScalingFactor))  + 
-  theme_ponyo() +
-  geom_errorbar(aes(ymin=TailSum_mean-TailSum_sd, ymax=TailSum_mean+TailSum_sd), width=.2, position=position_dodge(.9)) +
-  ggtitle("SFS Tail Sums of Human European Population") +
-  labs(x="Burn-In Method",y="Proportion of SNPs in SFS Tail\n(Sum of Allele Frequencies 5-50)") + 
-  facet_grid2(DomCoefficent ~ GenomeSize, scales = "free_y", independent = "y")+
-  scale_y_continuous(limits = c(0,0.6), expand = expansion(mult = c(0, .05)))
-
-# East Asian SFS Tail
-tail_easi <- ggplot(data = sfsSummary[sfsSummary$Population=="East Asian",], aes(x=BurnInType, y=TailSum_mean, fill=ScalingFactor))  + 
-  theme_ponyo() +
-  geom_errorbar(aes(ymin=TailSum_mean-TailSum_sd, ymax=TailSum_mean+TailSum_sd), width=.2, position=position_dodge(.9)) +
-  ggtitle("SFS Tail Sums of Human East Asian Population") +
-  labs(x="Burn-In Method",y="Proportion of SNPs in SFS Tail\n(Sum of Allele Frequencies 5-50)") + 
-  facet_grid2(DomCoefficent ~ GenomeSize, scales = "free_y", independent = "y")+
-  scale_y_continuous(limits = c(0,0.6), expand = expansion(mult = c(0, .05)))
-
-
-
-
-# Heterozygosity by population ----
-
-# African population heterozygosity
+# African heterozygosity bar plot
 pi_afr <- ggplot(data = pop_afr, aes(x=BurnInType, y=ExpHet_mean, fill=ScalingFactor))  + 
   theme_ponyo() +
   geom_errorbar(aes(ymin=ExpHet_mean-ExpHet_sd, ymax=ExpHet_mean+ExpHet_sd), width=.2, position=position_dodge(.9)) +
@@ -290,7 +293,7 @@ pi_afr <- ggplot(data = pop_afr, aes(x=BurnInType, y=ExpHet_mean, fill=ScalingFa
   scale_y_continuous(limits =c(0,0.001), expand = expansion(mult = c(0, .05)),labels = label_number(suffix = "", scale = 10000)) +
   theme(axis.text.x = element_text(size = 12))
 
-# European population heterozygosity
+# European heterozygosity bar plot
 pi_eur <- ggplot(data = pop_eur, aes(x=BurnInType, y=ExpHet_mean, fill=ScalingFactor))  + 
   theme_ponyo() +
   geom_errorbar(aes(ymin=ExpHet_mean-ExpHet_sd, ymax=ExpHet_mean+ExpHet_sd), width=.2, position=position_dodge(.9)) +
@@ -300,7 +303,7 @@ pi_eur <- ggplot(data = pop_eur, aes(x=BurnInType, y=ExpHet_mean, fill=ScalingFa
   scale_y_continuous(limits =c(0,0.001), expand = expansion(mult = c(0, .05)),labels = label_number(suffix = "", scale = 10000)) +
   theme(axis.text.x = element_text(size = 12))
 
-# East Asian population heterozygosity
+# East Asian heterozygosity bar plot
 pi_easi <- ggplot(data = pop_easi, aes(x=BurnInType, y=ExpHet_mean, fill=ScalingFactor))  + 
   theme_ponyo() +
   geom_errorbar(aes(ymin=ExpHet_mean-ExpHet_sd, ymax=ExpHet_mean+ExpHet_sd), width=.2, position=position_dodge(.9)) +
@@ -310,9 +313,10 @@ pi_easi <- ggplot(data = pop_easi, aes(x=BurnInType, y=ExpHet_mean, fill=Scaling
   scale_y_continuous(limits =c(0,0.001), expand = expansion(mult = c(0, .05)),labels = label_number(suffix = "", scale = 10000)) +
   theme(axis.text.x = element_text(size = 12))
 
-# Watterson's Theta by population ----
 
-# African population Watterson's theta
+# WATTERSON'S THETA BAR PLOTS ----
+
+# African Watterson's theta bar plot
 theta_afr <- ggplot(data = pop_afr, aes(x=BurnInType, y=Theta_mean, fill=ScalingFactor))  + 
   theme_ponyo() +
   geom_errorbar(aes(ymin=Theta_mean-Theta_sd, ymax=Theta_mean+Theta_sd), width=.2, position=position_dodge(.9)) +
@@ -322,7 +326,7 @@ theta_afr <- ggplot(data = pop_afr, aes(x=BurnInType, y=Theta_mean, fill=Scaling
   scale_y_continuous(limits =c(0,0.0011), expand = expansion(mult = c(0, .05))) +
   theme(axis.text.x = element_text(size = 12))
 
-# European population Watterson's theta
+# European Watterson's theta bar plot
 theta_eur <- ggplot(data = pop_eur, aes(x=BurnInType, y=Theta_mean, fill=ScalingFactor))  + 
   theme_ponyo() +
   geom_errorbar(aes(ymin=Theta_mean-Theta_sd, ymax=Theta_mean+Theta_sd), width=.2, position=position_dodge(.9)) +
@@ -332,7 +336,7 @@ theta_eur <- ggplot(data = pop_eur, aes(x=BurnInType, y=Theta_mean, fill=Scaling
   scale_y_continuous(limits =c(0,0.0011), expand = expansion(mult = c(0, .05))) +
   theme(axis.text.x = element_text(size = 12))
 
-# East Asian population Watterson's theta
+# East Asian Watterson's theta bar plot
 theta_easi <- ggplot(data = pop_easi, aes(x=BurnInType, y=Theta_mean, fill=ScalingFactor))  + 
   theme_ponyo() +
   geom_errorbar(aes(ymin=Theta_mean-Theta_sd, ymax=Theta_mean+Theta_sd), width=.2, position=position_dodge(.9)) +
@@ -342,7 +346,10 @@ theta_easi <- ggplot(data = pop_easi, aes(x=BurnInType, y=Theta_mean, fill=Scali
   scale_y_continuous(limits =c(0,0.0011), expand = expansion(mult = c(0, .05))) +
   theme(axis.text.x = element_text(size = 12))
 
-# Save sfs plots ----
+
+# SAVE PLOTS TO PDF ----
+
+# Save sfs plots
 ggsave(afr_plt, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/sfs/african_sfs_WG.pdf", 
        device = cairo_pdf, width = 11, height = 8.5, units = "in")
 ggsave(eur_plt, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/sfs/european_sfs_WG.pdf", 
@@ -350,16 +357,7 @@ ggsave(eur_plt, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/sfs/
 ggsave(easi_plt, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/sfs/eastasian_sfs.pdf", 
        device = cairo_pdf, width = 11, height = 8.5, units = "in")
 
-
-# Save sfs tail plots ----
-ggsave(tail_afr, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/sfs/african_sfsTail.pdf", 
-       device = cairo_pdf, width = 11, height = 8.5, units = "in")
-ggsave(tail_eur, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/sfs/european_sfsTail.pdf", 
-       device = cairo_pdf, width = 11, height = 8.5, units = "in")
-ggsave(tail_easi, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/sfs/eastasian_sfsTail.pdf", 
-       device = cairo_pdf, width = 11, height = 8.5, units = "in")
-
-# Save pop stat plots ----
+# Save heterozygosity plots
 ggsave(pi_afr, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/sfs/human_african_het_exonic.pdf", 
        device = cairo_pdf, width = 11, height = 8.5, units = "in")
 ggsave(pi_eur, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/sfs/human_european_het_exonic.pdf", 
@@ -367,6 +365,7 @@ ggsave(pi_eur, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/sfs/h
 ggsave(pi_easi, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/sfs/human_eastasian_het.pdf", 
        device = cairo_pdf, width = 11, height = 8.5, units = "in")
 
+# Save theta plots
 ggsave(theta_afr, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/sfs/human_african_theta_exonic.pdf", 
        device = cairo_pdf, width = 11, height = 8.5, units = "in")
 ggsave(theta_eur, filename = "C:/Users/tferrari/Desktop/SlimBenchmark/figures/sfs/human_european_theta_exonic.pdf", 

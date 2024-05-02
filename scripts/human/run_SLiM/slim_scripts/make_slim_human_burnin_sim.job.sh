@@ -13,10 +13,10 @@ c=${3}
 # Set G, the genome size
 G=${4}
 
-cd /scratch1/tferrari/SlimBenchmark/human
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM/scripts/human
 
 # Make burn-in script
-cat > ./scripts/temp/humanBench_burnin${n}_${x}Ne_c${c}_${G}.job << EOM
+cat > ./temp/humanBench_burnin${n}_${x}Ne_c${c}_${G}.job << EOM
 
 initialize() {
 	
@@ -42,14 +42,14 @@ initialize() {
 1:$(( ${t}/${c} )) late() {
         
 	if (community.tick % 1000 == 0){
-                writeFile("/scratch1/tferrari/SlimBenchmark/human/logs/gen/humanBench_burnin${n}_${x}Ne_c${c}_${G}.gen", paste(sim.cycle));
+                writeFile("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/gen_logs/human/humanBench_burnin${n}_${x}Ne_c${c}_${G}.gen", paste(sim.cycle));
         }
 }
 
 // After burn-in, save tree sequence
 $(( ${t}/${c} )) late() {
 	
-	sim.treeSeqOutput("/scratch1/tferrari/SlimBenchmark/human/out/burn${x}_scale${c}_gensize${G}/humanBench_burnin${n}_${x}Ne_c${c}_${G}.trees");
+	sim.treeSeqOutput("/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human/burn${x}_scale${c}_gensize${G}/humanBench_burnin${n}_${x}Ne_c${c}_${G}.trees");
 	catn( "// ********** Initial random number seed: " + simID);
 	catn( "// ********** Burn-in replicate number: ${n}");
 	catn( "// ********** Burn-in type: ${x}");

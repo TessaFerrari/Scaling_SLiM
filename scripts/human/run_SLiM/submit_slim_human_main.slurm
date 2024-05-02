@@ -7,13 +7,13 @@
 #SBATCH --mail-user=tferrari@usc.edu
 #SBATCH --account=jazlynmo_738
 #SBATCH --partition=qcb
-#SBATCH --output=/scratch1/tferrari/SlimBenchmark/human/logs/slurm/main/slurm-%A_%a.out
+#SBATCH --output=/scratch1/tferrari/SlimBenchmark/Scaling_SLiM/slurm_logs/human/main/slurm-%A_%a.out
 
 module load gcc/8.3.0
 SLIMDIR=/home1/tferrari/build
 
 # Set working directory
-cd /scratch1/tferrari/SlimBenchmark/human/scripts/run_SLiM
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM/scripts/human/run_SLiM
 
 # Select parameters from config file
 config=human_main_config.txt 
@@ -29,14 +29,14 @@ rep=$(awk -v ArrayTaskID=$SLURM_ARRAY_TASK_ID '$1==ArrayTaskID {print $7}' $conf
 if [[ "$t" == "Coal" ]]
 then
 	./slim_scripts/make_slim_human_main_coal.job.sh ${n} ${c} ${G} ${h} ${rep}		# generate coal script
-	${SLIMDIR}/slim -t -m ./temp/humanBench_coal_c${c}_${G}_h${h}_n${n}_rep${rep}.job	# run coal simulation
+	${SLIMDIR}/slim -t -m ../temp/humanBench_coal_c${c}_${G}_h${h}_n${n}_rep${rep}.job	# run coal simulation
 elif [[ "$t" == "Recap" ]]
 then
 	mkdir ../../out/burnRecap_scale${c}_gensize${G}
 	./slim_scripts/make_slim_human_main_recap.job.sh ${n} ${c} ${G} ${h} ${rep}		# generate recap script
-	${SLIMDIR}/slim -t -m ./temp/humanBench_recap_c${c}_${G}_h${h}_n${n}_rep${rep}.job	# run recap simulation
+	${SLIMDIR}/slim -t -m ../temp/humanBench_recap_c${c}_${G}_h${h}_n${n}_rep${rep}.job	# run recap simulation
 else
 	./slim_scripts/make_slim_human_main_sim.job.sh ${n} ${t} ${c} ${G} ${h} ${rep}		# generate 5N/10N/20N script
-	${SLIMDIR}/slim -t -m ./temp/humanBench_${t}Ne_c${c}_${G}_h${h}_n${n}_rep${rep}.job	# run 5N/10N/20N simulation
+	${SLIMDIR}/slim -t -m ../temp/humanBench_${t}Ne_c${c}_${G}_h${h}_n${n}_rep${rep}.job	# run 5N/10N/20N simulation
 fi
 
