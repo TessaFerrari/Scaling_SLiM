@@ -1,8 +1,8 @@
 
-cd /scratch1/tferrari/SlimBenchmark/human/out
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human
 
-printf "BurnInType\tScalingFactor\tGenomeSize\tRepNum\tMemMB\tTimeSecs\n" > ../data/burnin_compStat_table.txt
-printf "ScalingFactor\tGenomeSize\tRepNum\tCoalTime\n" > ../data/burnin_coalescenceTimes_table.txt
+printf "BurnInType\tScalingFactor\tGenomeSize\tRepNum\tMemMB\tTimeSecs\n" > ../../data/human/burnin_compStat_table.txt
+printf "ScalingFactor\tGenomeSize\tRepNum\tCoalTime\n" > ../../data/human/burnin_coalescenceTimes_table.txt
 
 for t in 5 10 20 Coal; do
 for c in 10 5 1; do
@@ -16,12 +16,12 @@ for n in 1 2; do
 	mem=`awk -F", |MB)" '/Peak memory usage:/ {print $2}' $file`
 	time=`awk -F": " '/CPU time used:/ {print $2}' $file`
 
-	printf "$t\t$c\t$G\t$n\t$mem\t$time\n" >> ../data/burnin_compStat_table.txt
+	printf "$t\t$c\t$G\t$n\t$mem\t$time\n" >> ../../data/human/burnin_compStat_table.txt
 
 	# Coalescence Stats
 	if [[ "$t" == "Coal" ]]; then
 		coal=`awk -F"[][()]" '/COALESCE/ {print $2}' $file`
-		printf "$c\t$G\t$n\t$coal\n" >> ../data/burnin_coalescenceTimes_table.txt
+		printf "$c\t$G\t$n\t$coal\n" >> ../../data/human/burnin_coalescenceTimes_table.txt
 	fi
 
 

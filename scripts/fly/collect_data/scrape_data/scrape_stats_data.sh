@@ -1,9 +1,9 @@
 
-cd /scratch1/tferrari/SlimBenchmark/fly
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM
 
 set -o noclobber # prevent overwriting if there are duplicate slurm logs 
 
-for file in logs/slurm/main/*
+for file in slurm_logs/fly/stats/*
 do
 	# Collect info for file naming
 	n=`awk '/Burn-in replicate number:/ {print $6}' $file`
@@ -17,7 +17,7 @@ do
 	if [ "$t" != "Coal" ] && [ "$t" != "Recap" ]; then x=$t"Ne"; elif [ "$t" == "Coal" ]; then x=coal; else x=recap; fi
 
 	# Move stats to data file
-	awk '$2 ~ /\*\*\*\*\*\*\*\*\*\*/ {print $0}' $file | cut -d\  -f3- > out/burn${t}_scale${c}_gensize${G}/flyBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.txt # print data to file
+	awk '$2 ~ /\*\*\*\*\*\*\*\*\*\*/ {print $0}' $file | cut -d\  -f3- > out/fly/burn${t}_scale${c}_gensize${G}/flyBench_${x}_c${c}_${G}_h${h}_n${n}_rep${rep}.stats.txt # print data to file
 
 done
 

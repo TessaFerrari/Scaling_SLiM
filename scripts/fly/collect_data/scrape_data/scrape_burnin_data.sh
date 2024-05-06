@@ -1,9 +1,9 @@
 
-cd /scratch1/tferrari/SlimBenchmark/human
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM
 
 set -o noclobber # prevent overwriting if there are duplicate slurm logs 
 
-for file in logs/slurm/burnIn/*
+for file in slurm_logs/fly/burnin/*
 do
 	# Collect info for file naming
 	n=`awk '/Burn-in replicate number:/ {print $6}' $file`
@@ -15,10 +15,10 @@ do
 	if [[ "$t" != "Coal" ]]; then x=$t"Ne"; else x=coal; fi
 
 	# Move stats to data file
-	awk '$2 ~ /\*\*\*\*\*\*\*\*\*\*/ {print $0}' $file | cut -d\  -f3- > out/burn${t}_scale${c}_gensize${G}/humanBench_burnin${n}_${x}_c${c}_${G}.txt # print data to file
+	awk '$2 ~ /\*\*\*\*\*\*\*\*\*\*/ {print $0}' $file | cut -d\  -f3- > out/fly/burn${t}_scale${c}_gensize${G}/flyBench_burnin${n}_${x}_c${c}_${G}.txt # print data to file
 
 	# Append coalescence info to file
-	awk '/COALESCE/ {print $0}' $file >> out/burn${t}_scale${c}_gensize${G}/humanBench_burnin${n}_${x}_c${c}_${G}.txt
+	awk '/COALESCE/ {print $0}' $file >> out/fly/burn${t}_scale${c}_gensize${G}/flyBench_burnin${n}_${x}_c${c}_${G}.txt
 
 done
 

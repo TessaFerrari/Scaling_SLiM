@@ -1,9 +1,9 @@
 # Set number of replicates per burn-in
 rep=5 
 
-cd /scratch1/tferrari/SlimBenchmark/human/out
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/human
 
-printf "BurnInType\tScalingFactor\tGenomeSize\tDomCoefficent\tBurnNum\tSimNum\tMemMB\tTimeSecs\n" > ../data/main_compStat_table.txt
+printf "BurnInType\tScalingFactor\tGenomeSize\tDomCoefficent\tBurnNum\tSimNum\tMemMB\tTimeSecs\n" > ../../data/human/main_compStat_table.txt
 
 for t in 5 10 20 Coal Recap; do
 for c in 10 5 1; do
@@ -21,7 +21,7 @@ for (( r=1; r <= $z; r++ )); do
 	mem=`awk -F", |MB)" '/Peak memory usage:/ {print $2}' $file`
 	time=`awk -F": " '/CPU time used:/ {print $2}' $file`
 
-	printf "$t\t$c\t$G\t$h\t$n\t$r\t$mem\t$time\n" >> ../data/main_compStat_table.txt
+	printf "$t\t$c\t$G\t$h\t$n\t$r\t$mem\t$time\n" >> ../../data/human/main_compStat_table.txt
 
 
 done

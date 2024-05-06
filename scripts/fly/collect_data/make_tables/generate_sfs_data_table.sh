@@ -1,9 +1,9 @@
 # Set number of replicates per burn-in
 rep=5 
 
-cd /scratch1/tferrari/SlimBenchmark/fly/out
+cd /scratch1/tferrari/SlimBenchmark/Scaling_SLiM/out/fly
 
-out=../data/subsamp50_sfs_table.txt
+out=../../data/fly/subsamp50_sfs_table.txt
 
 #Print sfs header
 printf "Population\tBurnInType\tScalingFactor\tGenomeSize\tDomCoefficent\tBurnNum\tSimNum\tTotNumMuts" > ${out}
